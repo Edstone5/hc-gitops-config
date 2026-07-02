@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: pedidos-api
-          image: web-app-estudiante:1.2.0   # <-- tag SemVer inmutable (lo bumpea el CI)
+          image: web-app-estudiante:1.1.0   # <-- tag SemVer inmutable (lo bumpea el CI)
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
