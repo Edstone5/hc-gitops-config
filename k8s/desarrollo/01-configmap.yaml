@@ -1,0 +1,11 @@
+# ConfigMap — configuración externalizada (inyectada a los adaptadores).
+# sync-wave -1: se crea antes que cualquier otro recurso.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hexagonal-config
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+data:
+  DB_URL: "database-service"
+  API_PORT: "3000"

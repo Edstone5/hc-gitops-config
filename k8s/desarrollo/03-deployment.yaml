@@ -1,0 +1,43 @@
+# Servicio de dominio (adaptador REST) — se enciende DESPUÉS de la base de datos.
+# sync-wave "1". Imagen con tag SemVer INMUTABLE (no 'latest'); el pipeline de CI
+# actualiza este tag automáticamente (GitOps). Incluye Liveness y Readiness Probes
+# para que Argo CD determine la salud real (Healthy) del microservicio.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+  labels:
+    app: hexagonal-api
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hexagonal-api
+  template:
+    metadata:
+      labels:
+        app: hexagonal-api
+    spec:
+      containers:
+        - name: pedidos-api
+          image: web-app-estudiante:1.1.0   # <-- tag SemVer inmutable (lo bumpea el CI)
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: hexagonal-config
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 3000
+            initialDelaySeconds: 15   # tiempo para que el dominio cargue
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
