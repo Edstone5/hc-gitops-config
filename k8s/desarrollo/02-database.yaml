@@ -1,6 +1,6 @@
-# Adaptador de salida (base de datos) — se enciende ANTES que el servicio de dominio.
-# sync-wave "0": Argo CD espera a que esté Healthy antes de pasar a la wave 1 (la app).
-# Demuestra la orquestación de orden de encendido (Sync Waves) del laboratorio.
+# Adaptador de salida (base de datos MySQL real del proyecto) — arranca ANTES
+# que el servicio de dominio. sync-wave "0": Argo CD espera a que esté Healthy
+# antes de pasar a la wave 1 (el backend). Demuestra las Sync Waves.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,25 +20,32 @@ spec:
         app: database
     spec:
       containers:
-        - name: postgres
-          image: postgres:16-alpine
+        - name: mysql
+          image: mysql:8.0
+          args: ["--default-authentication-plugin=mysql_native_password"]
           env:
-            - name: POSTGRES_PASSWORD
-              value: "postgres"
-            - name: POSTGRES_DB
-              value: "pedidos"
+            - name: MYSQL_ROOT_PASSWORD
+              value: "root_password"
+            - name: MYSQL_DATABASE
+              value: "hc_db"
+            - name: MYSQL_USER
+              value: "hc_user"
+            - name: MYSQL_PASSWORD
+              value: "hc_password"
           ports:
-            - containerPort: 5432
+            - containerPort: 3306
           readinessProbe:
             exec:
-              command: ["sh", "-c", "pg_isready -U postgres"]
-            initialDelaySeconds: 5
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -u hc_user -phc_password"]
+            initialDelaySeconds: 20
             periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: database-service   # DNS interno que consume el ConfigMap (DB_URL)
+  name: database-service   # DNS interno que consume el backend (DATABASE_URL)
   annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
@@ -46,5 +53,5 @@ spec:
     app: database
   ports:
     - protocol: TCP
-      port: 5432
-      targetPort: 5432
+      port: 3306
+      targetPort: 3306

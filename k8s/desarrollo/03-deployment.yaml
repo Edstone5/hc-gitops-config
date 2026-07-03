@@ -1,7 +1,8 @@
-# Servicio de dominio (adaptador REST) — se enciende DESPUÉS de la base de datos.
-# sync-wave "1". Imagen con tag SemVer INMUTABLE (no 'latest'); el pipeline de CI
-# actualiza este tag automáticamente (GitOps). Incluye Liveness y Readiness Probes
-# para que Argo CD determine la salud real (Healthy) del microservicio.
+# Servicio de dominio (backend real hc-backend) — se enciende DESPUÉS de la BD.
+# sync-wave "1". Imagen con tag SemVer INMUTABLE que actualiza el pipeline de CI
+# (job gitops-delivery de hc-backend). Probes de salud reales:
+#   - liveness: TCP 3000 (proceso vivo).
+#   - readiness: GET /health (200 solo si conecta a MySQL; 503 si no).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,15 +30,18 @@ spec:
           envFrom:
             - configMapRef:
                 name: hexagonal-config
+            - secretRef:
+                name: app-secrets
           livenessProbe:
-            httpGet:
-              path: /health/live
+            tcpSocket:
               port: 3000
-            initialDelaySeconds: 15   # tiempo para que el dominio cargue
-            periodSeconds: 10
+            initialDelaySeconds: 20
+            periodSeconds: 15
           readinessProbe:
             httpGet:
-              path: /health/ready
+              path: /health
               port: 3000
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6

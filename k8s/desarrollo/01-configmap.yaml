@@ -1,5 +1,6 @@
-# ConfigMap — configuración externalizada (inyectada a los adaptadores).
+# Configuración externalizada del microservicio real (hc-backend).
 # sync-wave -1: se crea antes que cualquier otro recurso.
+# ConfigMap: valores no sensibles.  Secret: credenciales (DATABASE_URL, JWT).
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,5 +8,18 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
 data:
-  DB_URL: "database-service"
-  API_PORT: "3000"
+  NODE_ENV: "production"
+  PORT: "3000"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+type: Opaque
+stringData:
+  # El backend detecta el dialecto desde el esquema de la URL (mysql:// -> MySQL).
+  DATABASE_URL: "mysql://hc_user:hc_password@database-service:3306/hc_db"
+  JWT_SECRET: "supersecret_jwt_key_change_in_production"
+  JWT_REFRESH_SECRET: "supersecret_refresh_key_change_in_production"
