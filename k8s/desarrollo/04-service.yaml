@@ -1,8 +1,13 @@
 # Service NodePort — expone el servicio de dominio hacia la laptop en el puerto 30100.
+# El puerto se NOMBRA ("http") para que el ServiceMonitor pueda referenciarlo y
+# Prometheus raspe /metrics del backend. La etiqueta app=hexagonal-api en el
+# metadata es el selector que usa el ServiceMonitor (05-servicemonitor.yaml).
 apiVersion: v1
 kind: Service
 metadata:
   name: api-service
+  labels:
+    app: hexagonal-api
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
@@ -10,7 +15,8 @@ spec:
   selector:
     app: hexagonal-api
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 80
       targetPort: 3000
       nodePort: 30100

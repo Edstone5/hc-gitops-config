@@ -1,0 +1,28 @@
+# ServiceMonitor (CRD de prometheus-operator, instalado por kube-prometheus-stack).
+# Hace que Prometheus DESCUBRA el backend y raspe /metrics automáticamente.
+#   - selector: elige el Service con label app=hexagonal-api (api-service).
+#   - endpoints.port: "http" (nombre del puerto del Service -> targetPort 3000).
+#   - label release=observability: la Prometheus del kube-prometheus-stack solo
+#     adopta ServiceMonitors con la etiqueta del release de Helm ("observability").
+# sync-wave "2": se aplica después del Service. Argo CD lo despliega junto al MVP.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hc-backend
+  labels:
+    app: hexagonal-api
+    release: observability
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  namespaceSelector:
+    matchNames:
+      - mvp-desarrollo
+  selector:
+    matchLabels:
+      app: hexagonal-api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
