@@ -1,8 +1,9 @@
 # Servicio de dominio (backend real hc-backend) — se enciende DESPUÉS de la BD.
 # sync-wave "1". Imagen con tag SemVer INMUTABLE que actualiza el pipeline de CI
-# (job gitops-delivery de hc-backend). Probes de salud reales:
-#   - liveness: TCP 3000 (proceso vivo).
-#   - readiness: GET /health (200 solo si conecta a MySQL; 503 si no).
+# (job gitops-delivery de hc-backend). Probes de salud reales (SWEBOK v4):
+#   - liveness:  GET /health/live  (200 si el proceso vive; NO consulta la BD).
+#   - readiness: GET /health/ready (200 solo si conecta a MySQL; 503 si no →
+#                K8s saca el pod de los endpoints y el SLO cae observable).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,15 +34,18 @@ spec:
             - secretRef:
                 name: app-secrets
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /health/live
               port: 3000
             initialDelaySeconds: 20
             periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /health
+              path: /health/ready
               port: 3000
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 3
-            failureThreshold: 6
+            failureThreshold: 3

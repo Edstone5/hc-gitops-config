@@ -10,6 +10,10 @@ metadata:
 data:
   NODE_ENV: "production"
   PORT: "3000"
+  # ── OpenTelemetry (trazas distribuidas → OTel Collector → Jaeger) ──
+  OTEL_SERVICE_NAME: "hc-backend"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.monitoring:4317"
+  OTEL_RESOURCE_ATTRIBUTES: "service.namespace=historia-clinica,deployment.environment=mvp-desarrollo,service.version=2.1.0"
 ---
 apiVersion: v1
 kind: Secret
