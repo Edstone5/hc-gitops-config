@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: pedidos-api
-          image: edstone05/hc-backend:v1.1.15
+          image: edstone05/hc-backend:v1.1.18
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
